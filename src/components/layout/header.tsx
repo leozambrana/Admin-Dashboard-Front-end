@@ -60,7 +60,7 @@ export function Header() {
             </p>
           </div>
           <Avatar className="h-9 w-9">
-            <AvatarImage src={user?.avatar} alt={user?.name} />
+            <AvatarImage src={user?.avatar || ""} alt={user?.name} />
             <AvatarFallback>
               {user?.name?.charAt(0).toUpperCase() || "U"}
             </AvatarFallback>
