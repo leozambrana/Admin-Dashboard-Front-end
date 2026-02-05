@@ -108,15 +108,3 @@ Senha: admin123
 | `/api/users/:id`       | GET/PATCH/DELETE | Usuário específico    |
 | `/api/plans`           | GET              | Listar planos         |
 | `/api/dashboard/stats` | GET              | Estatísticas          |
-
-## 🚀 Deploy
-
-Este projeto está pronto para deploy na Vercel:
-
-1. Push para o GitHub
-2. Conecte à Vercel
-3. Deploy automático
-
----
-
-Desenvolvido com ❤️ usando Next.js e shadcn/ui
