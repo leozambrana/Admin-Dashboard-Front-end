@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -19,8 +19,11 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { useUpdateUser, usePlans } from "@/hooks";
+import { useUpdateUser, usePlans, useUpdateUserAvatar } from "@/hooks";
 import type { User, UserRole, UserStatus, Plan } from "@/types";
+import { Camera } from "lucide-react";
+import Image from "next/image";
+import { getImageUrl } from "@/services/api";
 
 interface EditUserDialogProps {
   user: User | null;
@@ -30,26 +33,15 @@ interface EditUserDialogProps {
 export function EditUserDialog({ user, onClose }: EditUserDialogProps) {
   const { data: plans } = usePlans();
   const updateUser = useUpdateUser();
+  const updateAvatar = useUpdateUserAvatar();
 
   const [form, setForm] = useState({
-    name: "",
-    email: "",
-    role: "USER" as UserRole,
-    status: "ACTIVE" as UserStatus,
-    planId: "",
+    name: user?.name ?? "",
+    email: user?.email ?? "",
+    role: (user?.role ?? "USER") as UserRole,
+    status: (user?.status ?? "ACTIVE") as UserStatus,
+    planId: user?.planId ?? "",
   });
-
-  useEffect(() => {
-    if (user) {
-      setForm({
-        name: user.name,
-        email: user.email,
-        role: user.role,
-        status: user.status,
-        planId: user.planId,
-      });
-    }
-  }, [user]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -66,6 +58,26 @@ export function EditUserDialog({ user, onClose }: EditUserDialogProps) {
     }
   };
 
+  const handleAvatarChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      const file = e.target.files[0];
+      const formData = new FormData();
+      formData.append("avatar", file);
+
+      try {
+        await updateAvatar.mutateAsync({
+          userId: user?.id || "",
+          file,
+        });
+      } catch (error) {
+
+        console.error("Erro ao fazer upload do avatar:", error);
+      }
+    }
+  };
+
+  const avatarUrl = getImageUrl(user?.avatar);
+
   return (
     <Dialog open={!!user} onOpenChange={(open) => !open && onClose()}>
       <DialogContent className="sm:max-w-106.25">
@@ -76,6 +88,41 @@ export function EditUserDialog({ user, onClose }: EditUserDialogProps) {
           </DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="grid gap-4 py-4">
+          <div className="flex flex-col items-center justify-center gap-4 py-4">
+            <div className="relative group">
+              <div className="h-24 w-24 rounded-full border-2 border-primary/20 overflow-hidden bg-muted flex items-center justify-center">
+                {avatarUrl ? (
+                  <Image
+                    src={avatarUrl}
+                    alt={user?.name || "Avatar"}
+                    width={96}
+                    height={96}
+                    unoptimized
+                    className="h-full w-full object-cover"
+                  />
+                ) : (
+                  <span className="text-2xl font-bold">{user?.name ? user.name.charAt(0) : ""}</span>
+                )}
+              </div>
+              <label
+                htmlFor="avatar-upload"
+                className="absolute inset-0 flex items-center justify-center bg-black/40 text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer"
+              >
+                <Camera className="h-6 w-6" />
+              </label>
+              <input
+                id="avatar-upload"
+                type="file"
+                className="hidden"
+                accept="image/*"
+                onChange={handleAvatarChange}
+                disabled={updateAvatar.isPending}
+              />
+            </div>
+            <p className="text-xs text-muted-foreground">
+              {updateAvatar.isPending ? "Enviando..." : "Clique para alterar sua foto"}
+            </p>
+          </div>
           <div className="grid gap-2">
             <Label htmlFor="edit-name">Nome</Label>
             <Input

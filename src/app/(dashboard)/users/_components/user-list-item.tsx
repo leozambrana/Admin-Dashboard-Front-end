@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { getInitials, cn } from "@/utils";
+import { getImageUrl } from "@/services/api";
 import type { User, Plan } from "@/types";
 
 interface UserListItemProps {
@@ -22,7 +23,10 @@ export function UserListItem({ user, plans, onEdit, onDelete }: UserListItemProp
   return (
     <div className="flex items-center gap-4 rounded-lg border border-border bg-card p-4 transition-colors hover:bg-muted/50">
       <Avatar className="h-10 w-10 border border-border">
-        <AvatarImage src={user.avatar || undefined} alt={user.name} />
+        <AvatarImage 
+          src={getImageUrl(user.avatar) || undefined} 
+          alt={user.name} 
+        />
         <AvatarFallback className="bg-primary/10 text-primary font-medium">
           {getInitials(user.name)}
         </AvatarFallback>

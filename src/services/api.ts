@@ -11,7 +11,19 @@ import type {
   UpdateUserDTO,
 } from "@/types";
 
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3333/api";
+const rawApiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3333/api";
+const cleanUrl = rawApiUrl.replace('NEXT_PUBLIC_API_URL=', '').trim();
+
+export const API_BASE = cleanUrl.startsWith('http') ? cleanUrl : `http://localhost:3333/api`;
+
+// Helper para pegar a URL completa da imagem
+export function getImageUrl(path: string | null | undefined): string | null {
+  if (!path) return null;
+  if (path.startsWith('http')) return path;
+
+  const backendHost = API_BASE.replace('/api', '');
+  return `${backendHost}/files/avatar/${path.replace(/^\/+/, '')}`;
+}
 
 function getToken(): string | null {
   if (typeof window === "undefined") return null;
@@ -32,8 +44,10 @@ async function fetchApi<T>(
 ): Promise<T> {
   const token = getToken();
   
+  const isFormData = options?.body instanceof FormData;
+  
   const headers: HeadersInit = {
-    "Content-Type": "application/json",
+    ...(!isFormData && { "Content-Type": "application/json" }),
     ...options?.headers,
   };
 
@@ -115,6 +129,24 @@ export const usersApi = {
   delete: (id: string) =>
     fetchApi<void>(`/users/${id}`, {
       method: "DELETE",
+    }),
+
+  getAvatarPresignedUrl: (userId: string, contentType: string) =>
+    fetchApi<{ url: string; filename: string }>(`/users/${userId}/avatar/presign`, {
+      method: "POST",
+      body: JSON.stringify({ contentType }),
+    }),
+
+  updateAvatarKey: (userId: string, avatarFilename: string) =>
+    fetchApi<User>(`/users/${userId}/avatar`, {
+      method: "PATCH",
+      body: JSON.stringify({ avatarFilename }),
+    }),
+
+  updateAvatar: (userId: string, formData: FormData) =>
+    fetchApi<User>(`/users/${userId}/avatar`, {
+      method: "PATCH",
+      body: formData,
     }),
 };
 

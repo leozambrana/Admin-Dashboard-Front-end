@@ -95,6 +95,40 @@ export function useDeleteUser() {
   });
 }
 
+export function useUpdateUserAvatar() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ userId, file }: { userId: string; file: File }) => {
+      const presign = await usersApi.getAvatarPresignedUrl(userId, file.type);
+
+      if (presign.url === "local") {
+        const formData = new FormData();
+        formData.append("avatar", file);
+        return usersApi.updateAvatar(userId, formData);
+      }
+
+      const uploadResponse = await fetch(presign.url, {
+        method: "PUT",
+        headers: {
+          "Content-Type": file.type,
+        },
+        body: file,
+      });
+
+      if (!uploadResponse.ok) {
+        throw new Error("Falha ao enviar arquivo para o storage");
+      }
+
+      return usersApi.updateAvatarKey(userId, presign.filename);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["users"] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.currentUser });
+    },
+  });
+}
+
 export function usePlans() {
   return useQuery({
     queryKey: queryKeys.plans,

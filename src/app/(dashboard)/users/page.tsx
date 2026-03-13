@@ -178,7 +178,8 @@ export default function UsersPage() {
       />
       
       <EditUserDialog 
-        user={editingUser} 
+        key={editingUser?.id}
+        user={data?.data.find((u: User) => u.id === editingUser?.id) || editingUser} 
         onClose={() => setEditingUser(null)} 
       />
       
